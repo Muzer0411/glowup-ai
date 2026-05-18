@@ -180,6 +180,9 @@
   </head>
   <body>
     <div class="toast" id="toast">Done</div>
+    <div id="unlock-banner" style="display:none;position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(125,211,252,.28);background:#075985;padding:12px 16px;color:#fff;font-weight:800;text-align:center;">
+      Premium report unlocked. Scroll down to view your full Glow-Up plan.
+    </div>
     <main class="wrap">
       <section class="hero">
         <div>
@@ -279,6 +282,9 @@
     </main>
     <script>
       const checkoutUrl = "https://eyebelfy.gumroad.com/l/Glow-UpReport";
+      if (new URLSearchParams(window.location.search).get("checkout") === "success") {
+        document.querySelector("#unlock-banner").style.display = "block";
+      }
       let freeUsage = 0;
       let invites = 1;
       const toast = document.querySelector("#toast");
