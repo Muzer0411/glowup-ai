@@ -10,7 +10,7 @@ import {
   Users,
 } from "lucide-react";
 
-const sampleReport = {
+const defaultReport = {
   score: 87,
   faceShape: "Oval",
   attractiveness: "High",
@@ -18,6 +18,8 @@ const sampleReport = {
   hairstyle: "Textured fringe / Korean two-block",
   priority: "Reduce body fat slightly, improve sleep consistency, and use soft volume to frame the upper face.",
   outfit: "Cropped jacket, straight-leg trousers, clean sneakers, and neutral layers.",
+  plan30Days:
+    "Week 1 haircut references, week 2 wardrobe basics, week 3 fitness consistency, week 4 photos and dating profile refresh.",
 };
 
 const seoPages = [
@@ -67,8 +69,11 @@ function App() {
   const [freeUsage, setFreeUsage] = useState(0);
   const [referrals, setReferrals] = useState(1);
   const [photoUrl, setPhotoUrl] = useState("");
+  const [photoDataUrl, setPhotoDataUrl] = useState("");
+  const [report, setReport] = useState(defaultReport);
   const [toast, setToast] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("checkout") === "success";
@@ -88,15 +93,49 @@ function App() {
     const file = event.target.files?.[0];
     if (!file) return;
     setPhotoUrl(URL.createObjectURL(file));
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPhotoDataUrl(String(reader.result || ""));
+    };
+    reader.readAsDataURL(file);
   }
 
-  function runAnalysis() {
+  async function runAnalysis() {
     if (isFreeBlocked) {
       showToast("Free report used. Unlock the full report for $1.99.");
       return;
     }
-    setFreeUsage((value) => value + 1);
-    showToast("Demo report generated from cached sample data.");
+
+    if (!photoDataUrl) {
+      showToast("Upload a selfie first.");
+      return;
+    }
+
+    setIsAnalyzing(true);
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ image: photoDataUrl }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.report) {
+        throw new Error(data.error || "AI analysis failed.");
+      }
+
+      setReport(data.report);
+      setFreeUsage((value) => value + 1);
+      showToast("AI report generated.");
+    } catch (error) {
+      showToast(error.message || "AI analysis failed.");
+    } finally {
+      setIsAnalyzing(false);
+    }
   }
 
   function downloadShareCard() {
@@ -123,12 +162,12 @@ function App() {
     ctx.fillText("GlowUp Score", 140, 210);
 
     ctx.font = "800 220px Arial";
-    ctx.fillText(String(sampleReport.score), 140, 470);
+    ctx.fillText(String(report.score), 140, 470);
 
     ctx.font = "600 52px Arial";
-    ctx.fillText("Face: " + sampleReport.faceShape, 140, 620);
-    ctx.fillText("Style: " + sampleReport.style, 140, 710);
-    ctx.fillText("Attractiveness: " + sampleReport.attractiveness, 140, 800);
+    ctx.fillText("Face: " + report.faceShape, 140, 620);
+    ctx.fillText("Style: " + report.style, 140, 710);
+    ctx.fillText("Attractiveness: " + report.attractiveness, 140, 800);
 
     ctx.fillStyle = "#d4d4d8";
     ctx.font = "500 38px Arial";
@@ -184,7 +223,7 @@ function App() {
             </button>
             <button className="secondary-btn" onClick={runAnalysis}>
               <Camera size={18} />
-              {isFreeBlocked ? "Free report used" : "Analyze free"}
+              {isAnalyzing ? "Analyzing..." : isFreeBlocked ? "Free report used" : "Analyze free"}
             </button>
             <button className="primary-btn" onClick={startCheckout} disabled={isCheckingOut}>
               <Lock size={18} />
@@ -224,15 +263,15 @@ function App() {
           <div className="score-strip">
             <div>
               <span>GlowUp Score</span>
-              <strong>{sampleReport.score}</strong>
+              <strong>{report.score}</strong>
             </div>
             <div>
               <span>Face</span>
-              <strong>{sampleReport.faceShape}</strong>
+              <strong>{report.faceShape}</strong>
             </div>
             <div>
               <span>Style</span>
-              <strong>{sampleReport.style}</strong>
+              <strong>{report.style}</strong>
             </div>
           </div>
         </div>
@@ -286,10 +325,10 @@ function App() {
 
         <div className="share-card">
           <span>Share preview</span>
-          <h2>GlowUp Score: {sampleReport.score}</h2>
-          <p>Face: {sampleReport.faceShape}</p>
-          <p>Style: {sampleReport.style}</p>
-          <p>Attractiveness: {sampleReport.attractiveness}</p>
+          <h2>GlowUp Score: {report.score}</h2>
+          <p>Face: {report.faceShape}</p>
+          <p>Style: {report.style}</p>
+          <p>Attractiveness: {report.attractiveness}</p>
         </div>
       </section>
 
@@ -300,11 +339,13 @@ function App() {
           {isPremiumUnlocked ? (
             <dl>
               <dt>Recommended hairstyle</dt>
-              <dd>{sampleReport.hairstyle}</dd>
+              <dd>{report.hairstyle}</dd>
               <dt>Glow-up priority</dt>
-              <dd>{sampleReport.priority}</dd>
+              <dd>{report.priority}</dd>
               <dt>Outfit direction</dt>
-              <dd>{sampleReport.outfit}</dd>
+              <dd>{report.outfit}</dd>
+              <dt>30-day plan</dt>
+              <dd>{report.plan30Days}</dd>
             </dl>
           ) : (
             <div className="locked-report">

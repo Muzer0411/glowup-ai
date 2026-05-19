@@ -74,3 +74,22 @@ https://your-domain.com/?checkout=success
 3. Configure Gumroad redirect after purchase.
 4. Convert SEO examples into real routes.
 5. Track referral codes in a database.
+
+## AI Analysis
+
+The `Analyze free` button calls:
+
+```text
+/api/analyze
+```
+
+Set these environment variables in Vercel:
+
+```text
+OPENAI_API_KEY=your_new_rotated_openai_key
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+Important: never commit `.env.local` or paste API keys into chat. If a key was exposed, revoke it and create a new one before deploying.
+
+The current analysis is a style and presentation report. It avoids identity, age, ethnicity, health, and other sensitive inferences.
