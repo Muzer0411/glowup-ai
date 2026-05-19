@@ -55,6 +55,12 @@ The React app unlocks the premium report when the URL contains:
 ?checkout=success
 ```
 
+For the simplest Gumroad MVP delivery, use the standalone unlock page:
+
+```text
+https://your-domain.com/unlock.html
+```
+
 For Gumroad, configure the product redirect URL to your deployed app with `?checkout=success`, for example:
 
 ```text
